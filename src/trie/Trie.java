@@ -5,50 +5,152 @@ import java.util.Map;
 
 public class Trie {
 
+    private class TrieNode {
+        Map<Character, TrieNode> children;
+        boolean endOfWord;
+
+        public TrieNode() {
+            children = new HashMap<>();
+            endOfWord = false;
+        }
+    }
+
+    private final TrieNode root;
+    public Trie() {
+        root = new TrieNode();
+    }
+
     public static void main(String[] args) {
-        Node c = new Node('c');
-        Node a = new Node('a');
-        Node r = new Node('r');
-        c.addChild(a);
-        a.addChild(r);
-        r.isComplete = true;
+        Trie trie = new Trie();
+        trie.insert("cab");
+        trie.insert("cabin");
+        trie.insert("car");
+        trie.insert("card");
 
-        Node b = new Node('b');
-        a.addChild(b);
-        b.isComplete = true;
-
-        printWords(c, new StringBuffer());
+        String search = "cab";
+        System.out.println(search+"="+trie.search(search));
+        search = "card";
+        System.out.println(search+"="+trie.search(search));
+        search = "bard";
+        System.out.println(search+"="+trie.search(search));
+        search = "car";
+        System.out.println(search+"="+trie.search(search));
     }
 
-    static void printWords(Node node, StringBuffer buf) {
-        buf.append(node.c);
-        if (node.isComplete) {
-            System.out.println(buf);
-        } else {
-            for (Map.Entry<Character, Node> entry : node.children.entrySet()) {
-                printWords(entry.getValue(), buf);
+    /**
+     * Iterative implementation of insert into trie
+     */
+    public void insert(String word) {
+        TrieNode current = root;
+        for (int i = 0; i < word.length(); i++) {
+            char ch = word.charAt(i);
+            TrieNode node = current.children.get(ch);
+            if (node == null) {
+                node = new TrieNode();
+                current.children.put(ch, node);
             }
+            current = node;
         }
+        //mark the current nodes endOfWord as true
+        current.endOfWord = true;
     }
 
+    /**
+     * Recursive implementation of insert into trie
+     */
+    public void insertRecursive(String word) {
+        insertRecursive(root, word, 0);
+    }
+
+    private void insertRecursive(TrieNode current, String word, int index) {
+        if (index == word.length()) {
+            //if end of word is reached then mark endOfWord as true on current node
+            current.endOfWord = true;
+            return;
+        }
+        char ch = word.charAt(index);
+        TrieNode node = current.children.get(ch);
+
+        //if node does not exists in map then create one and put it into map
+        if (node == null) {
+            node = new TrieNode();
+            current.children.put(ch, node);
+        }
+        insertRecursive(node, word, index + 1);
+    }
+
+    /**
+     * Iterative implementation of search into trie.
+     */
+    public boolean search(String word) {
+        TrieNode current = root;
+        for (int i = 0; i < word.length(); i++) {
+            char ch = word.charAt(i);
+            TrieNode node = current.children.get(ch);
+            //if node does not exist for given char then return false
+            if (node == null) {
+                return false;
+            }
+            current = node;
+        }
+        //return true of current's endOfWord is true else return false.
+        return current.endOfWord;
+    }
+
+    /**
+     * Recursive implementation of search into trie.
+     */
+    public boolean searchRecursive(String word) {
+        return searchRecursive(root, word, 0);
+    }
+    private boolean searchRecursive(TrieNode current, String word, int index) {
+        if (index == word.length()) {
+            //return true of current's endOfWord is true else return false.
+            return current.endOfWord;
+        }
+        char ch = word.charAt(index);
+        TrieNode node = current.children.get(ch);
+        //if node does not exist for given char then return false
+        if (node == null) {
+            return false;
+        }
+        return searchRecursive(node, word, index + 1);
+    }
+
+    /**
+     * Delete word from trie.
+     */
+    public void delete(String word) {
+        delete(root, word, 0);
+    }
+
+    /**
+     * Returns true if parent should delete the mapping
+     */
+    private boolean delete(TrieNode current, String word, int index) {
+        if (index == word.length()) {
+            //when end of word is reached only delete if currrent.endOfWord is true.
+            if (!current.endOfWord) {
+                return false;
+            }
+            current.endOfWord = false;
+            //if current has no other mapping then return true
+            return current.children.size() == 0;
+        }
+        char ch = word.charAt(index);
+        TrieNode node = current.children.get(ch);
+        if (node == null) {
+            return false;
+        }
+        boolean shouldDeleteCurrentNode = delete(node, word, index + 1);
+
+        //if true is returned then delete the mapping of character and trienode reference from map.
+        if (shouldDeleteCurrentNode) {
+            current.children.remove(ch);
+            //return true if no mappings are left in the map.
+            return current.children.size() == 0;
+        }
+        return false;
+    }
 }
 
-class Node {
-    Map<Character, Node> children = new HashMap<>();
-    boolean isComplete = false;
-    Character c;
-
-    public Node(Character c) {
-        this.c = c;
-    }
-
-    Node addChild(Node child) {
-        if (children.containsKey(child.c)) {
-            return children.get(c);
-        } else {
-            children.put(c, child);
-            return child;
-        }
-    }
-
-}
